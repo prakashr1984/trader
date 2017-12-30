@@ -5,14 +5,14 @@
   "main": "dist/server.js",
   "scripts": {
     "start": "tsc && node dist/server.js",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "typescript": "^2.6.2"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/express": "^4.11.0",
     "nodemon": "^1.14.6",
-    "ts-node": "^4.1.0",
-    "typescript": "^2.6.2"
+    "ts-node": "^4.1.0"
   }
 }
