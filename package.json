@@ -4,7 +4,7 @@
   "description": "A trading app",
   "main": "dist/server.js",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "tsc && node dist/server.js",
     "dev": "nodemon",
     "build": "tsc"
   },
@@ -13,10 +13,10 @@
   "devDependencies": {
     "@types/express": "^4.11.0",
     "nodemon": "^1.14.6",
-    "ts-node": "^4.1.0",
-    "typescript": "^2.6.2"
+    "ts-node": "^4.1.0"
   },
   "dependencies": {
-    "express": "^4.16.2"
+    "express": "^4.16.2",
+    "typescript": "^2.6.2"
   }
 }
