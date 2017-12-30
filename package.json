@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/server.js",
     "dev": "nodemon",
-    "build" : "tsc"
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
@@ -15,5 +15,8 @@
     "nodemon": "^1.14.6",
     "ts-node": "^4.1.0",
     "typescript": "^2.6.2"
+  },
+  "dependencies": {
+    "express": "^4.16.2"
   }
 }
