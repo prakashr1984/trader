@@ -2,7 +2,9 @@ import * as express from "express"
 
 const app = express()
 
-app.listen(8000, () => console.log("Server running on 8000"))
+const port = process.env.PORT || 8000
+
+app.listen(port, () => console.log("Server running on " + port))
 
 app.get("/", (req, res) => {
     res.send("Awesome!")
