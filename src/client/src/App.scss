@@ -1,0 +1,16 @@
+@import 'react-md/src/scss/react-md';
+
+.App {
+  display: flex;
+  flex-direction: column;
+  flex:1;
+}
+
+
+.buy {
+  background: $md-green-400;
+}
+
+.sell {
+  background: $md-red-400;
+}
