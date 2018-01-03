@@ -16,21 +16,55 @@ export class RedisStore {
 
     connect() {
         this.client = redis.createClient(this.options)
-        this.client.flushdb()
+        this.clean()
         this.client.on("error", function (err) {
             console.log("Error " + err);
         });
     }
 
-    updatewallet(type, cur, bal, interest, available_bal) {
-        this.client.hset(type, cur, bal)
+    clean() {
+        this.client.del(['BIDS', 'ASKS', 'SELLS', 'BUYS', 'LAST'], (err, o) => {
+            if (err) {
+                console.log(err)
+            }
+        });
+
+        setInterval(()=>{
+            this.client.multi()
+            .zremrangebyrank ('BIDS', 25, -1)
+            .zremrangebyrank ('ASKS', 25, -1)
+            .exec()
+        }, 10000)
     }
 
-    updateBid(size, price) {
-        this.client.set('BID', JSON.stringify({ size: size, price: price }))
+    updatewallet(wallet) {
+        this.client.hset(wallet.type, wallet.currency, wallet.balance)
     }
-    updateAsk(size, price) {
-        this.client.set('ASK', JSON.stringify({ size: size, price: price }))
+
+    addtrade(mts, price, size) {
+        let multi = this.client.multi();
+        multi.set('LAST', price)
+        if (size < 0)
+            multi.zadd('SELLS', mts, JSON.stringify({ size: -size, price: price }))
+        else if (size > 0)
+            multi.zadd('BUYS', mts, JSON.stringify({ size: size, price: price }))
+        multi.exec()
+    }
+
+    updateBid(price, count, amount) {
+        if (count == 0) {
+            this.client.zremrangebyscore('BIDS', price, price)
+        } else {
+            this.client.zadd('BIDS', price, JSON.stringify({ price, count, amount }))
+        }
+        //this.client.set('BID', JSON.stringify({ size: size, price: price }))
+    }
+    updateAsk(price, count, amount) {
+        if (count == 0) {
+            this.client.zremrangebyscore('ASKS', price, price)
+        } else {
+            this.client.zadd('ASKS', price, JSON.stringify({ price, count, amount: -amount }))
+        }
     }
 
     getBid() {
@@ -38,7 +72,7 @@ export class RedisStore {
             this.client.getAsync('BID').then(val => {
                 if (val != null)
                     resolve(JSON.parse(val));
-                else 
+                else
                     reject()
             })
         })
@@ -48,7 +82,7 @@ export class RedisStore {
             this.client.getAsync('ASK').then(val => {
                 if (val != null)
                     resolve(JSON.parse(val));
-                else 
+                else
                     reject()
             })
         })

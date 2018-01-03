@@ -1,6 +1,9 @@
 import { RedisStore } from './datastore'
-import {config} from './config'
-const BFX = require('bitfinex-api-node')
+import { config } from './config'
+import * as bluebird from 'bluebird'
+import * as BFX from 'bitfinex-api-node'
+
+
 
 export class Trade {
 
@@ -12,55 +15,103 @@ export class Trade {
 
 
     connect() {
-        this.bws = new BFX(config.API_KEY, config.API_SECRET, {
-            version: 2,
-            transform: true
-        }).ws
+        this.bws = new BFX({
+            apiKey: config.API_KEY,
+            apiSecret: config.API_SECRET,
+            transform: true,
+            ws: {
+                autoReconnect: true,
+            }
+        }).ws()
         this.bws.on('open', this.onopen.bind(this))
-        this.bws.on('ws', this.wallet.bind(this));
-        this.bws.on('wu', this.wallet.bind(this));
-        this.bws.on('orderbook', this.orderbook.bind(this));
+        this.bws.on('error', (err) => console.log(err))
+        this.bws.open()
+
 
         this.redis = new RedisStore(config.redisOpts)
         this.redis.connect()
 
-        setInterval(()=>{
-            this.redis.getBid().then((val: any) => console.log('BID: ' + val.price))
-            this.redis.getAsk().then((val: any) => console.log('ASK: ' + val.price))
-        }, 2000)
+        setInterval(()=> {
+            this.redis.client.zrevrangeAsync('BIDS', 0, 0).then((b) => {
+                if (b[0] != null) {
+                    const obj = JSON.parse(b[0])
+                    console.log(`BID: ${obj.price}`)
+                }
+            });
+            this.redis.client.zrangeAsync('ASKS', 0, 0).then((b) => {
+                if (b[0] != null) {
+                    const obj = JSON.parse(b[0])
+                    console.log(`ASK: ${obj.price}`)
+                }
+            });
+            //this.redis.client.zcountAsync('ASKS', '-inf','+inf').then((b) => console.log(b))
+        }, 1000)
     }
+
+
+
     onopen() {
-        // bws.subscribeTicker('BTCUSD')
-        this.bws.subscribeOrderBook('BTCUSD','P0','1')
-        //bws.subscribeTrades('BTCUSD')    
+        this.bws.subscribeOrderBook('BTCUSD','P0','25')
+        this.bws.subscribeTrades('BTCUSD')
+        
+        this.bws.onWalletSnapshot({}, this.onWalletUpdate.bind(this))
+        this.bws.onWalletUpdate({}, this.onWalletUpdate.bind(this))
+        this.bws.onTradeEntry({}, this.onTradeEntry.bind(this))
+        this.bws.onOrderBook({}, this.onOrderBook.bind(this))
+
         this.bws.auth()
     }
-    wallet(msg) {
-        if(Array.isArray(msg)) {
-            msg.forEach(w => {
-                this.redis.updatewallet.apply(this.redis, w)
-            });
+    onWalletUpdate(wallet) {
+        if (Array.isArray(wallet)) {
+            wallet.forEach(w => this.onWalletUpdate(w) );
         } else {
-            this.redis.updatewallet.apply(this.redis, msg)
+            this.redis.updatewallet(wallet)
         }
     }
 
-    orderbook(pair, book) {
-        if (book.COUNT > 0) {
-            if(book.AMOUNT > 0) {
-                 this.redis.updateBid(book.AMOUNT, book.PRICE)
-            } else {
-                this.redis.updateAsk(-book.AMOUNT, book.PRICE)
+    onTradeEntry(trade) {
+        if (Array.isArray(trade)) {
+            trade.forEach(t => this.onTradeEntry(t) );
+        } else {
+            this.redis.addtrade(trade.mts, trade.price, trade.amount)
+        }
+    }    
+    onOrderBook(book) {
+        var price, count, amount;
+        if (book.bids.length > 0) {
+            for(let i = 0; i< book.bids.length; i++) {
+                [price, count, amount] = book.bids[i]
+                this.redis.updateBid(price, count, amount)
             }
-         } else if(book.COUNT == 0) {
-             if (book.AMOUNT == 1) {
-                this.redis.updateBid(0,0)
-             } else if (book.AMOUNT == -1){
-                this.redis.updateAsk(0,0)
-             }
-         }
+        }
+        if (book.asks.length > 0) {
+            
+            for(let i = 0; i< book.asks.length; i++) {
+                [price, count, amount] = book.asks[i]
+                this.redis.updateAsk(price, count, amount)
+            }
+        }
+
+        // if (book.COUNT > 0) {
+        //     if (book.AMOUNT > 0) {
+        //         this.redis.updateBid(book.AMOUNT, book.PRICE)
+        //     } else {
+        //         this.redis.updateAsk(-book.AMOUNT, book.PRICE)
+        //     }
+        // } else if (book.COUNT == 0) {
+        //     if (book.AMOUNT == 1) {
+        //         this.redis.updateBid(0, 0)
+        //     } else if (book.AMOUNT == -1) {
+        //         this.redis.updateAsk(0, 0)
+        //     }
+        // }
     }
 
+    
+
+    notification(msg) {
+
+    }
     disconnect() {
 
     }
@@ -74,7 +125,7 @@ export class Trade {
     }
 
     updateorder(id, size, price) {
-        
+
     }
     cancelorder(id) {
 

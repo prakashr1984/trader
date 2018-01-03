@@ -2,10 +2,11 @@
   "name": "trader",
   "version": "1.0.0",
   "description": "A trading app",
-  "main": "dist/server.js",
+  "main": "dist/server/server.js",
   "scripts": {
-    "start": "node dist/server.js",
-    "dev": "nodemon",
+    "start": "node dist/server/server.js",
+    "server": "nodemon --config src/server/nodemon.json",
+    "tradecapture": "nodemon --config src/tradecapture/nodemon.json",
     "build": "tsc"
   },
   "author": "",
@@ -17,9 +18,10 @@
     "typescript": "^2.6.2"
   },
   "dependencies": {
-    "bitfinex-api-node": "^1.2.1",
+    "bitfinex-api-node": "^2.0.0-beta",
     "bluebird": "^3.5.1",
     "express": "^4.16.2",
+    "lodash": "^4.17.4",
     "redis": "^2.8.0"
   }
 }
