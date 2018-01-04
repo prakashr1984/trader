@@ -28,20 +28,35 @@ export class TradeCapture {
         })
     }
 
+    connect() {
+        this.bws = new BFX(this.bfxOptions).ws()
+        this.bws.on('open', () => {
+            console.log("Connection Open");
+            this.listen()
+        })
+        this.bws.on('error', (err) => {
+            console.log("Connection Error: Reconnecting...");
+            setTimeout(() => this.connect(), 1000)
+        })
+        this.bws.on('close', (err) => {
+            console.log("Connection Closed: Reconnecting...");
+            setTimeout(() => this.connect(), 1000)
+        })
+        this.bws.open()
+    }
+
+    listen() {
+        this.bws.subscribeTrades(this.pair)
+        this.bws.onTradeEntry({ pair: this.pair }, this.onTradeEntry.bind(this))
+    }
+
     start() {
         this.client = redis.createClient(this.redisOptions)
         this.client.on("error", function (err) {
             console.log("Error " + err);
         });
 
-        this.bws = new BFX(this.bfxOptions).ws()
-        this.bws.on('open', () => {
-            this.bws.subscribeTrades(this.pair)
-            this.bws.onTradeEntry({ pair: this.pair }, this.onTradeEntry.bind(this))
-            console.log("Bfx Connection Open");
-        })
-        this.bws.on('error', (err) => console.log(err))
-        this.bws.open()
+        this.connect()
 
         process.on("exit", () => {
             this.client.quit();
