@@ -52,6 +52,7 @@
   ],
   "include": [
     "src/server/**/*.ts",
-    "src/tradecapture/**/*.ts"
+    "src/tradecapture/**/*.ts",
+    "src/orderbook/**/*.ts"
   ]
 }

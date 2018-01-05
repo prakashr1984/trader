@@ -11,7 +11,7 @@ const t = new TradeCapture({
         apiSecret: config.API_SECRET,
         transform: true,
         ws: {
-            autoReconnect: true,
+            autoReconnect: false,
         }
     },
     redis: config.redisOpts

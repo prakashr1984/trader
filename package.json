@@ -7,6 +7,7 @@
     "start": "node dist/server/server.js",
     "server": "nodemon --config src/server/nodemon.json",
     "tradecapture": "nodemon --config src/tradecapture/nodemon.json",
+    "orderbook": "nodemon --config src/orderbook/nodemon.json",
     "build": "tsc"
   },
   "author": "",
