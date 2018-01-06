@@ -32,7 +32,9 @@ export class Api {
                 pair: pair,
                 bid,
                 ask,
-                last
+                last,
+                spread: ask.price - bid.price,
+                mid: (ask.price + bid.price)/2
             })
         })
     }
