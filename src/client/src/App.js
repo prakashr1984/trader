@@ -1,7 +1,7 @@
 import React from 'react';
 import { Route } from 'react-router-dom'
 import './App.css';
-import Home  from './component/pages/Home'
+import Home  from './pages/Home'
 
 const App = () => (
     <div className="App dark-theme">  
